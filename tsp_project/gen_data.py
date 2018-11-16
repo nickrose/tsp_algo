@@ -14,7 +14,7 @@ def dist_metric(x, y):
 
 
 def generate_graph(nstops_all=1000, base_dist=2., grid_size_noise_std=1.,
-        seed=40, debug=1):
+        seed=40, debug=0):
     """ generate data in which path problems can be formulated
 
         Args:
@@ -53,8 +53,8 @@ def generate_graph(nstops_all=1000, base_dist=2., grid_size_noise_std=1.,
     # we filled the upper triangular portion of the matrix, fill the
     # lower triangular part now
     dist_mat += dist_mat.transpose()
-
-    print('final distance matrix shape', dist_mat.shape)
+    if debug:
+        print('final distance matrix shape', dist_mat.shape)
     return stop_locations, dist_mat, xrange
 
 
@@ -111,7 +111,8 @@ def generate_walkways_from_complete_graph(dist_mat, xrange, max_nbhrs=10,
             for k in range(nstops_all)])
 
     unconnected = sum(islanded)
-    print(f'number of questionably connected stops: {unconnected}')
+    if debug:
+        print(f'number of questionably connected stops: {unconnected}')
     islanded = np.arange(nstops_all)[islanded]
     if debug > 1:
         for k in islanded:
@@ -158,7 +159,7 @@ def generate_mail_stops(dist_mat, xrange, nstops_mail=30, manual_add=[],
 
 
 def generate_interesting_stops(dist_mat, xrange, nstops_interesting=2,
-        stop_dist_laplace_param=0.5, start_loc=0, seed=48, debug=1):
+        stop_dist_laplace_param=0.5, start_loc=0, seed=48, debug=0):
     """ generate list of 'interesting' stops to visit """
     np.random.seed(seed=seed)
     # mail_locations = np.zeros((nstops_mail, 2))
