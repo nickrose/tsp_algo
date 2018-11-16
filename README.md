@@ -8,7 +8,8 @@ Dijkstra (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
 for intermediate route finding.
 
 To get started, just just `interesting_paths.ipynb` in Jupyter notebook and
-execute the cells.
+execute the cells. The `tsp_solver.ipynb` has some examples of how to use
+the self-contained solver class `TSP` (in `algo.py`).
 
 As far as setup, first make sure to run `python setup.py develop` in the
 from the `tsp_algo` folder, this
