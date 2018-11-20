@@ -199,10 +199,10 @@ class TSP(object):
                             print('no previous solutions to update, try '
                                 'another solver')
                         return noncompute_return
-                if 'greedy_NN_recourse' in self.solutions:
-                    qa_solution = 'greedy_NN_recourse'
-                elif 'greedy_NN' in self.solutions:
+                if 'greedy_NN' in self.solutions:
                     qa_solution = 'greedy_NN'
+                elif 'greedy_NN_recourse' in self.solutions:
+                    qa_solution = 'greedy_NN_recourse'
                 else:
                     # we just need a previous saved solution
                     qa_solution = list(self.solutions.keys())[0]
@@ -273,7 +273,8 @@ class TSP(object):
             if self.debug:
                 dist_basic = self.solutions[self.solver_type]['dist_basic']
                 dist_expand = self.solutions[self.solver_type]['dist_expand']
-                print(f"{self.solver_type} algorithm")
+                print(f"{self.solver_type} algorithm "
+                    f"{('' if qa_solution is None else '(using prev solution: ' + qa_solution + ')')}")
                 print(f"   runtime     : {self.solutions[self.solver_type]['runtime']:.3f}s")
                 print(f"   route dist  : [coarse: {dist_basic:.3f}, fine: {dist_expand:.3f}]")
                 print(f"   validity    : [{valid}] expanded[{expnd_valid}]")
