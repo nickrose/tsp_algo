@@ -6,10 +6,21 @@ import itertools
 from tsp_project.plot_data import plot_mail_route
 from time import time
 import pandas as pd
+import warnings
+
+default_solver = 'greedy_NN'
 
 
 def zero():
     return 0
+
+
+def import_failed(name, url):
+    return (f'{name} TSP solver selected, but import '
+        'failed, please ensure concode TSPSolver is '
+        'available and installed (see '
+        f'{url} for an '
+        f'installation): switching to "{default_solver}"')
 
 
 class TSP(object):
@@ -20,10 +31,11 @@ class TSP(object):
         Nick Roseveare, Nov 2018
     """
     base_algorithm_types = ['quick_adjust', 'greedy_NN', 'greedy_NN_recourse',
-        'random']
+        'random', 'concorde']
 
     def __init__(self, stop_locations, dist_mat_all, dist_mat_edge_limited,
-            solver_type='greedy_NN', recourse_revisits=3, debug=1):
+            solver_type=default_solver, recourse_revisits=3,
+            fail_on_solver_import=True, debug=1):
         """
             intialize the TSP problem object
 
@@ -42,6 +54,9 @@ class TSP(object):
                 recourse_revisits (int, default is 3): the number of recourse
                     steps to revisit in solving for base cycle with
                     'greedy_NN_recourse' solver.
+                fail_on_solver_import (bool): if a solver import fails, then
+                    produce an error, otherwise default solver is selected.
+                    Default is False.
                 debug (int, default is 1): the verbosity level to use.
             Returns:
                 TSP object
@@ -49,6 +64,7 @@ class TSP(object):
         """
         self.stops = []
         self.debug = debug
+        self.fail_on_solver_import = fail_on_solver_import
         self.solver_type = None
         self.update_solver(solver_type)
         self.stop_locations = stop_locations
@@ -146,17 +162,55 @@ class TSP(object):
             valid = expnd_valid = True
         else:
             valid = expnd_valid = False
+            route = []
             points = np.asarray(self.stops)
             if self.debug:
-                print(f'finding approximate best routes for {len(points)} stops')
+                print(f'finding approximate best routes for {len(points)} '
+                    f'stops via {self.solver_type}')
                 if self.debug > 1:
                     print(points)
             runtime = points_skipped = 0
             if self.solver_type != 'quick_adjust':
                 startt = time()
+                if self.solver_type == 'concorde':
+                    imp_fail_str = None
+                    try:
+                        from concorde.tsp import TSPSolver
+                    except ImportError as ie:
+                        imp_fail_str = import_failed(
+                            'concorde', 'https://github.com/nickrose/pyconcorde')
+                        if self.fail_on_solver_import:
+                            raise ImportError(imp_fail_str)
+                        else:
+                            warnings.warn(imp_fail_str)
+                            self.solver_type = default_solver
+                            startt = time()
+                    else:
+                        if self.debug > 2:
+                            print('alt solver module: import successful')
+                        x, y = (
+                            np.asarray(self.stop_locations[self.stops,
+                                0].reshape(len(self.stops)).tolist()[0]),
+                            np.asarray(self.stop_locations[self.stops,
+                                1].reshape(len(self.stops)).tolist()[0]))
+                        solver = TSPSolver.from_data(x, y, 'EUC_2D')
+                        solution = solver.solve()
+                        valid = solution.found_tour
+                        if self.debug > 2:
+                            print(f'[{self.solver_type}]: valid: '
+                                f'{solution.found_tour}, optimal_value: '
+                                f'{solution.optimal_value:.4f}, tour indexed '
+                                f'stops: {solution.tour}')
+                        if valid:
+                            route = np.asarray(self.stops)[solution.tour]
+                            if self.debug > 2:
+                                print(f'   tour: {route}')
+                            route = route.tolist()
+                            route.append(points[0])
+                            route = np.asarray(route)
                 if self.solver_type == 'random':
                     route = random_traveling_salesman(points, self.dist_mat_all,
-                        start=0, end=0, debug=max(0, self.debug - 2))
+                        avg_edges=None, start=0, end=0, debug=max(0, self.debug - 2))
                 elif self.solver_type == 'greedy_NN':
                     route = nn_greedy_traveling_salesman(points, self.dist_mat_all,
                         start=0, end=0, debug=max(0, self.debug - 2))
@@ -169,8 +223,9 @@ class TSP(object):
                 if self.debug > 1:
                     print(f'routes [{self.solver_type:7s}]', route)
 
-                valid = check_valid_path(points, route, self.dist_mat_all,
-                    solver=self.solver_type, raiseError=raise_error_invalid)
+                if not(valid) and len(route):
+                    valid = check_valid_path(points, route, self.dist_mat_all,
+                        solver=self.solver_type, raiseError=raise_error_invalid)
 
                 try:
                     startt = time()
@@ -186,10 +241,6 @@ class TSP(object):
                         if ((self.solver_type in self.solutions) and
                             ('added_points' in self.solutions[self.solver_type]))
                         else len(points))
-                    # if self.is_monte_carlo_test:
-                    #     return
-                    # else:
-                    #     return noncompute_return
             else:
                 if len(self.solutions) == 0:
                     if self.is_monte_carlo_test:
@@ -199,7 +250,9 @@ class TSP(object):
                             print('no previous solutions to update, try '
                                 'another solver')
                         return noncompute_return
-                if 'greedy_NN' in self.solutions:
+                if 'concorde' in self.solutions:
+                    qa_solution = 'concorde'
+                elif 'greedy_NN' in self.solutions:
                     qa_solution = 'greedy_NN'
                 elif 'greedy_NN_recourse' in self.solutions:
                     qa_solution = 'greedy_NN_recourse'
@@ -336,6 +389,7 @@ class TSP(object):
                     f'{self.solutions[solver_type]["ref_added_points"]} ')
             if 'qa_previous_solve' in self.solutions[solver_type]:
                 prev = self.solutions[solver_type]['qa_previous_solve']
+                title += f'previous solution: {prev}'
                 alt_route = self.solutions[prev]['route_expand']
                 alt_route_label = 'previous solution'
         elif solver_type == 'greedy_NN_recourse':
@@ -609,7 +663,7 @@ def quick_adjust_route(route, subroutes, added_points, dist_mat_all,
     return np.asarray(route), subroutes, expanded_route, points_skipped, True
 
 
-def random_traveling_salesman(points, distmat, start=None,
+def random_traveling_salesman(points, distmat, avg_edges=None, start=None,
         max_perm_samples=2e3, end=None, debug=0):
     """
     Finds the shortest route to visit all the cities by bruteforce.
@@ -635,9 +689,10 @@ def random_traveling_salesman(points, distmat, start=None,
         start = points[0]
 
     npoints = len(points)
-    nnodes = distmat.shape[0]
-    nedges = sum([(~np.isinf(distmat[k, k+1:])).sum() for k in range(nnodes)])
-    avg_edges = int(nedges/nnodes) + 1
+    if avg_edges is None:
+        nnodes = distmat.shape[0]
+        nedges = sum([(~np.isinf(distmat[k, k+1:])).sum() for k in range(nnodes)])
+        avg_edges = int(nedges/nnodes) + 1
     # attempt to estimate the number of possible routes given the average
     # number of edges per node
     nroutes_test = min(int(max_perm_samples), avg_edges**npoints)
