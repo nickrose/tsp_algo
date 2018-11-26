@@ -1,6 +1,4 @@
---allow-all-external
 numpy==1.14.5
 scipy==1.1.0
 tqdm>=4.24.0
 matplotlib==2.2.2
-http://github.com/nickrose/pyconcorde/tarball/master#egg=package-0.1.0 --allow-unverified
