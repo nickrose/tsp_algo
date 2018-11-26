@@ -27,7 +27,7 @@ with open('README.md') as f:
 
 setup(name='tsp_project',
       version=__version__,
-      description=('Generate and solve traveling salesman problems (TSP) and '
+      description=('Generate traveling salesman problems (TSP) and '
         'approximate solutions'),
       long_description=readme,
       # long_description_content_type='text/markdown',

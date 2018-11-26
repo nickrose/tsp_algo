@@ -538,7 +538,7 @@ def quick_adjust_route(route, subroutes, added_points, dist_mat_all,
             route (list): current basic route
             distmat (np.matrix): the matrix of distances between all stops in
                 the field of interest.
-            ssubroutes (list of lists): the Dijkstra paths between the nodes
+            subroutes (list of lists): the Dijkstra paths between the nodes
                 in the 'route'.
             added_points (list): list of points to add to the basic route.
             distmat (np.matrix): the matrix of distances between all stops in
