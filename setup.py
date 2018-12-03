@@ -19,9 +19,10 @@ try:
     req_kwargs = dict(install_requires=install_reqs)
 except ImportError:
     import warnings
-    warnings.warn('could not import tools for parsing and installing required packages, '
-        'it may be that the setup.py will complete sucessfully, but that you do (or more'
-        ' likely, do not have the required packages installed)')
+    warnings.warn('could not import tools for parsing and installing required '
+        'packages, it may be that the setup.py will complete sucessfully, but '
+        'that you do (or more  likely, do not have the required packages '
+        'installed)')
     install_reqs = parse_requirements_mine('./requirements.txt')
     req_kwargs = dict(install_requires=install_reqs)
 try:
