@@ -7,11 +7,10 @@ Implements a basic greedy nearest neighbors approach
 Dijkstra (https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
 for intermediate route finding.
 
-To get started, just just `interesting_paths.ipynb` in Jupyter notebook and
-execute the cells. The `tsp_solver.ipynb` has some examples of how to use
-the self-contained solver class `TSP` (in `algo.py`).
+To get started, just have a look at `interesting_paths.ipynb` in Jupyter 
+notebook and execute the cells. The `tsp_solver.ipynb` has some examples
+of how to use the self-contained solver class `TSP` (in `tsp_project/algo.py`).
 
 As far as setup, first make sure to run `python setup.py develop` in the
-from the `tsp_algo` folder, this
-should attempt to install all required packages. Then try running the
-Jupyter notebook.
+from the `tsp_algo` folder, this should attempt to install all required
+packages. Then try running the Jupyter notebook.
